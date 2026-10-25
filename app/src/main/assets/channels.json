@@ -65,6 +65,15 @@
      "url": "https://thvli.vn/live/thvl4-hd"
     }
    ]
+  },
+  {
+   "name": "Cà Mau",
+   "channels": [
+    {
+     "name": "Truyền hình Cà Mau",
+     "url": "https://vtvgo.vn/channel/218"
+    }
+   ]
   }
  ]
 }
