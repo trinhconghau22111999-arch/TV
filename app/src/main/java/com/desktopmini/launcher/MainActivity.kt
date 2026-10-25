@@ -97,7 +97,7 @@ class MainActivity : Activity(), FullscreenHost {
     private fun dp(v: Int) = (v * resources.displayMetrics.density).toInt()
 
     private val tick = object : Runnable {
-        override fun run() { refreshStatus(); ui.postDelayed(this, 5000) }
+        override fun run() { refreshStatus(); ui.postDelayed(this, 15000) }
     }
 
     private val batteryRx = object : BroadcastReceiver() {
@@ -124,18 +124,21 @@ class MainActivity : Activity(), FullscreenHost {
 
         registerReceiver(batteryRx, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         refreshStatus()
-        ui.postDelayed(tick, 5000)
+        ui.postDelayed(tick, 15000)
 
         if (Build.VERSION.SDK_INT <= 28 &&
             checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
         ) requestPermissions(arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), REQ_STORAGE)
 
-        // Truyền tệp chạy ngầm với mã cố định (xem TransferHost.CODE)
-        transfer = TransferHost(this,
-            onTextEdit = { del, ins -> applyTextEdit(del, ins) },
-            onKeepAwake = { },
-            pickFile = { cb, params -> openFileChooser(cb, params) })
-        transfer?.start(hidden)
+        // Truyền tệp chạy ngầm: khởi động trễ vài giây để giao diện hiện ra trước cho nhanh
+        ui.postDelayed({
+            if (isFinishing || transfer != null) return@postDelayed
+            transfer = TransferHost(this,
+                onTextEdit = { del, ins -> applyTextEdit(del, ins) },
+                onKeepAwake = { },
+                pickFile = { cb, params -> openFileChooser(cb, params) })
+            transfer?.start(hidden)
+        }, 2500)
         ui.postDelayed({ maybeAskDefaultHome() }, 600)
     }
 

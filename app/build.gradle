@@ -36,8 +36,8 @@ android {
         release {
             signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
             // R8: bỏ code/tài nguyên không dùng. Quy tắc giữ cầu JavaScript nằm trong proguard-rules.pro
-            minifyEnabled false
-            shrinkResources false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

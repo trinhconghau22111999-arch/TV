@@ -47,7 +47,16 @@ private val AD_HOSTS = listOf(
 )
 
 private fun hostIs(h: String, d: String) = h == d || h.endsWith(".$d")
-private fun isAdHost(h: String) = AD_HOSTS.any { hostIs(h, it) }
+private val AD_SET = AD_HOSTS.toHashSet()
+private fun isAdHost(h: String): Boolean {
+    var x = h
+    while (true) {
+        if (AD_SET.contains(x)) return true
+        val i = x.indexOf('.')
+        if (i < 0) return false
+        x = x.substring(i + 1)
+    }
+}
 private fun isYoutubeHost(h: String) = hostIs(h, "youtube.com") || h == "youtu.be" || hostIs(h, "youtube-nocookie.com")
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -57,6 +66,8 @@ private fun configureWebView(act: Activity, web: WebView) {
     s.domStorageEnabled = true
     s.databaseEnabled = true
     s.mediaPlaybackRequiresUserGesture = false
+    s.setSupportZoom(false)
+    s.setGeolocationEnabled(false)
     s.setSupportMultipleWindows(false)
     s.javaScriptCanOpenWindowsAutomatically = false
     s.builtInZoomControls = false
