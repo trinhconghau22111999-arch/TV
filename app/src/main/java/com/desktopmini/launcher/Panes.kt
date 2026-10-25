@@ -34,6 +34,7 @@ interface FullscreenHost {
     fun showFull(v: View, cb: WebChromeClient.CustomViewCallback?)
     fun hideFull()
     fun launchVoice()
+    fun setBarVisible(v: Boolean)
 }
 
 private const val YT_HOME = "https://www.youtube.com/?hl=vi&gl=VN&persist_hl=1"
@@ -206,7 +207,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
         chooser.removeAllViews(); chooser.visibility = View.VISIBLE
         val sv = ScrollView(act)
         val col = LinearLayout(act).apply { orientation = LinearLayout.VERTICAL; setPadding(dp(12), dp(10), dp(12), dp(12)) }
-        col.addView(label("Chọn đài", 20f).apply { setPadding(0, 0, 0, dp(10)) })
+        col.addView(label("Chọn Kênh", 20f).apply { setPadding(0, 0, 0, dp(10)) })
         val grid = GridLayout(act).apply { columnCount = 3 }
         groups.forEachIndexed { i, g ->
             val b = chip(g.first) { showChannels(i) }
@@ -239,6 +240,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     @SuppressLint("SetJavaScriptEnabled")
     private fun play(url: String) {
         level = 2
+        full.setBarVisible(false)
         chooser.visibility = View.GONE
         val w = WebView(act)
         configureWebView(act, w)
@@ -253,6 +255,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
                 return if (isAdHost(h)) WebResourceResponse("text/plain", "utf-8", ByteArrayInputStream(ByteArray(0))) else null
             }
             override fun onPageFinished(view: WebView?, u: String?) {
+                view?.evaluateJavascript(TV_FULL_JS, null)
                 val h = try { Uri.parse(u ?: "").host } catch (e: Exception) { null } ?: return
                 if (hostIs(h, "youtube.com")) view?.evaluateJavascript("window.__wbAdSkip=true;" + YT_ONLY_AD_JS, null)
             }
@@ -264,6 +267,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     }
 
     private fun stopPlayer() {
+        full.setBarVisible(true)
         val w = player ?: return
         player = null
         try { w.loadUrl("about:blank"); (w.parent as? ViewGroup)?.removeView(w); w.destroy() } catch (e: Exception) { }
@@ -277,10 +281,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     fun back(): Boolean {
         return when (level) {
             2 -> {
-                val w = player
-                if (w != null && w.canGoBack()) w.goBack()
-                else if (curGroup >= 0 && groups[curGroup].second.size == 1) showGroups()
-                else showChannels(curGroup)
+                if (curGroup >= 0 && groups[curGroup].second.size > 1) showChannels(curGroup) else showGroups()
                 true
             }
             1 -> { showGroups(); true }

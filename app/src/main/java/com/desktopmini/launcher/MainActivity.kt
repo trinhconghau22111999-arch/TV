@@ -66,6 +66,9 @@ private class BatteryView(ctx: Context) : View(ctx) {
 
 class MainActivity : Activity(), FullscreenHost {
     private lateinit var content: FrameLayout
+    private lateinit var barView: LinearLayout
+    private lateinit var floatBack: TextView
+    private var barH = 0
     private lateinit var fullLayer: FrameLayout
     private lateinit var hidden: FrameLayout
     private lateinit var btnTv: TextView
@@ -154,7 +157,7 @@ class MainActivity : Activity(), FullscreenHost {
         root.setBackgroundColor(Color.BLACK)
         val col = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
 
-        val barH = dp(40)
+        barH = dp(40)
         val bar = LinearLayout(this).apply {
             orientation = LinearLayout.HORIZONTAL
             gravity = Gravity.CENTER_VERTICAL
@@ -192,6 +195,7 @@ class MainActivity : Activity(), FullscreenHost {
         dates.addView(tvDate); dates.addView(tvLunar)
         bar.addView(dates, LinearLayout.LayoutParams(-2, -1))
 
+        barView = bar
         col.addView(bar, LinearLayout.LayoutParams(-1, barH))
         content = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
         // Hình nền trang chủ (hiện khi chưa mở TV/YouTube); các khung TV/YouTube nằm phủ lên trên
@@ -205,6 +209,14 @@ class MainActivity : Activity(), FullscreenHost {
         fullLayer = FrameLayout(this).apply { visibility = View.GONE; setBackgroundColor(Color.BLACK) }
         val lp = FrameLayout.LayoutParams(-1, -1); lp.topMargin = barH
         root.addView(fullLayer, lp)
+        floatBack = TextView(this).apply {
+            text = "Thoát"; textSize = 14f; setTextColor(Color.WHITE); gravity = Gravity.CENTER
+            typeface = android.graphics.Typeface.DEFAULT_BOLD
+            setBackgroundColor(0x99000000.toInt()); setPadding(dp(14), dp(6), dp(14), dp(6))
+            visibility = View.GONE
+            setOnClickListener { goBack() }
+        }
+        root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
         hidden = FrameLayout(this)
         root.addView(hidden, FrameLayout.LayoutParams(1, 1))
         setContentView(root)
@@ -240,7 +252,17 @@ class MainActivity : Activity(), FullscreenHost {
         setMode(m)
     }
 
+    override fun setBarVisible(v: Boolean) {
+        runOnUiThread {
+            barView.visibility = if (v) View.VISIBLE else View.GONE
+            floatBack.visibility = if (v) View.GONE else View.VISIBLE
+            (fullLayer.layoutParams as FrameLayout.LayoutParams).topMargin = if (v) barH else 0
+            fullLayer.requestLayout()
+        }
+    }
+
     private fun setMode(m: Int) {
+        setBarVisible(true)
         tv?.let { content.removeView(it.view); it.onPause() }
         yt?.let { content.removeView(it.view); it.onPause() }
         mode = m
