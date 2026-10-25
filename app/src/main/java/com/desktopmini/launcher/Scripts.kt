@@ -110,3 +110,31 @@ const val VOICE_HOOK_JS = """
  try{new MutationObserver(hook).observe(document.documentElement,{childList:true,subtree:true});}catch(e){}
 })();
 """
+
+/** Ẩn nút "Mở ứng dụng" / "Open app" và banner mời tải app trên trang YouTube (theo dõi cả khi trang đổi nội dung). */
+const val HIDE_OPEN_APP_JS = """
+(function(){
+  if (window.__hideOpenApp) return; window.__hideOpenApp = true;
+  var st = document.createElement('style');
+  st.textContent = 'ytm-open-app-banner-renderer,ytm-mealbar-promo-renderer,ytm-open-app-button-renderer,.open-app-button,.mobile-topbar-header-sign-in-button{display:none!important}';
+  (document.head || document.documentElement).appendChild(st);
+  var RX = /^(mở ứng dụng|open app|mở app|open in app)$/i;
+  function sweep(){
+    var els = document.querySelectorAll('a,button,ytm-button-renderer,yt-button-shape,ytm-menu-item');
+    for (var i = 0; i < els.length; i++) {
+      var e = els[i];
+      if (e.__oa) continue;
+      var t = (e.innerText || e.getAttribute('aria-label') || '').replace(/\s+/g,' ').trim();
+      if (t && RX.test(t)) {
+        var h = e.closest('ytm-button-renderer,ytm-menu-item,yt-button-shape') || e;
+        h.style.setProperty('display','none','important');
+        e.__oa = true;
+      }
+    }
+  }
+  var timer = null;
+  new MutationObserver(function(){ if (timer) return; timer = setTimeout(function(){ timer = null; sweep(); }, 200); })
+    .observe(document.documentElement, {childList:true, subtree:true});
+  sweep();
+})();
+"""
