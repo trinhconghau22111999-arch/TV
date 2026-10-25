@@ -271,8 +271,8 @@ class MainActivity : Activity(), FullscreenHost {
         bar.addView(tvTime, LinearLayout.LayoutParams(-2, -1))
         // Ngày dương và âm lịch nằm chung một hàng, chữ to và đậm hơn cho dễ nhìn
         val dates = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
-        tvDate = small("", 15f, true)
-        tvLunar = small("", 15f, true).apply { setTextColor(0xFFFFD27A.toInt()); setPadding(dp(10), 0, 0, 0) }
+        tvDate = small("", 18f, true)
+        tvLunar = small("", 18f, true).apply { setTextColor(0xFFFFD27A.toInt()); setPadding(dp(10), 0, 0, 0) }
         dates.addView(tvDate, LinearLayout.LayoutParams(-2, -1)); dates.addView(tvLunar, LinearLayout.LayoutParams(-2, -1))
         bar.addView(dates, LinearLayout.LayoutParams(-2, -1))
 
