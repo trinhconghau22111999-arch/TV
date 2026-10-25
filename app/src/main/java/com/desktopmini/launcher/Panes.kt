@@ -221,6 +221,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
 
     private fun showChannels(gi: Int) {
         level = 1; curGroup = gi
+        if (groups[gi].second.size == 1) { play(groups[gi].second[0].second); return }   // đài chỉ có 1 kênh: xem luôn
         stopPlayer()
         chooser.removeAllViews(); chooser.visibility = View.VISIBLE
         val sv = ScrollView(act)
@@ -277,7 +278,9 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
         return when (level) {
             2 -> {
                 val w = player
-                if (w != null && w.canGoBack()) w.goBack() else showChannels(curGroup)
+                if (w != null && w.canGoBack()) w.goBack()
+                else if (curGroup >= 0 && groups[curGroup].second.size == 1) showGroups()
+                else showChannels(curGroup)
                 true
             }
             1 -> { showGroups(); true }
