@@ -294,6 +294,7 @@ class TransferHost(
         val out = contentResolver.openOutputStream(uri) ?: return false
         out.use { o -> src.inputStream().use { it.copyTo(o) } }
         return true
+    }
 
     companion object {
         /** Mã 6 số cố định: máy gửi (điện thoại) mở Truyền tệp và dùng đúng mã này. */
