@@ -163,8 +163,8 @@ class MainActivity : Activity(), FullscreenHost {
         }
         btnTv = barBtn("TV").apply { setOnClickListener { onModeButton(1) } }
         btnYt = barBtn("YouTube").apply { setOnClickListener { onModeButton(2) } }
-        val btnBack = barBtn("←").apply {
-            textSize = 20f
+        val btnBack = barBtn("Thoát").apply {
+            textSize = 16f
             setOnClickListener { goBack() }
         }
         val gap = { w: Int -> View(this).apply { layoutParams = LinearLayout.LayoutParams(dp(w), 1) } }
