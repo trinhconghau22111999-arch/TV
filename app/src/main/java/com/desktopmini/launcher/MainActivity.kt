@@ -301,6 +301,9 @@ class MainActivity : Activity(), FullscreenHost {
         panels = QuickPanels(this, root, barH)
         tvWifi.setOnClickListener { panels.toggle(1) }
         tvBt.setOnClickListener { panels.toggle(2) }
+        // Ẩn hẳn hai nút WiFi và Bluetooth trên thanh trên (mã bảng nhanh vẫn giữ, muốn hiện lại chỉ cần bỏ 2 dòng này)
+        tvWifi.visibility = View.GONE
+        tvBt.visibility = View.GONE
         hidden = FrameLayout(this)
         root.addView(hidden, FrameLayout.LayoutParams(1, 1))
         setContentView(root)
