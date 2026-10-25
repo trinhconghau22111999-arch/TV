@@ -398,11 +398,18 @@ class MainActivity : Activity(), FullscreenHost {
         catch (e: Exception) { fileCb?.onReceiveValue(null); fileCb = null; false }
     }
 
-    // Remote: noi tren dien thoai -> mo YouTube tim va tu mo video dau tien
+    // Remote giong noi, tuy che do dang chon san tren TV:
+    //  - dang o TV (mode 1): noi ten kenh/dai -> mo kenh do
+    //  - con lai (YouTube hoac trang trong): noi ten video -> tim tren YouTube va tu mo video dau tien
     private fun remoteVoice(q: String) {
+        if (mode == 1) {
+            val ok = tv?.playByName(q) ?: false
+            if (!ok) Toast.makeText(this, "Không tìm thấy kênh: $q", Toast.LENGTH_LONG).show()
+            return
+        }
         if (mode != 2) { hideFull(); setMode(2) }
         yt?.search(q)
-        val js = "(function(){var a=document.querySelector('a[href*=\"/watch?v=\"]');if(a){a.click();return 1}return 0})()"
+        val js = "(function(){var a=document.querySelector('a[href*=\\"/watch?v=\\"]');if(a){a.click();return 1}return 0})()"
         fun tryOpen(n: Int) {
             ui.postDelayed({
                 if (isFinishing || mode != 2) return@postDelayed

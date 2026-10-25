@@ -283,6 +283,37 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
         try { w.loadUrl("about:blank"); (w.parent as? ViewGroup)?.removeView(w); w.destroy() } catch (e: Exception) { }
     }
 
+    private fun normName(t: String): String {
+        val d = java.text.Normalizer.normalize(t.lowercase(), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "").replace('đ', 'd')
+        val skip = setOf("mo", "kenh", "dai", "truyen", "hinh", "xem", "cho", "toi", "tv", "len", "bat")
+        return d.split(Regex("[^a-z0-9]+")).filter { it.isNotEmpty() && it !in skip }.joinToString("")
+    }
+
+    /** Remote giong noi: tim kenh/dai theo ten da noi (vd "HTV9", "Ca Mau", "VTV1") roi phat. true neu tim thay. */
+    fun playByName(q: String): Boolean {
+        val nq = normName(q)
+        if (nq.isEmpty()) return false
+        var best = 0; var bestGi = -1; var bestUrl = ""; var bestDiff = Int.MAX_VALUE
+        groups.forEachIndexed { gi, g ->
+            g.second.forEach { (name, url) ->
+                for (cand in listOf(name, g.first)) {
+                    val n = normName(cand)
+                    if (n.isEmpty()) continue
+                    val score = if (n == nq) 3 else if (n.contains(nq) || nq.contains(n)) 2 else 0
+                    val diff = kotlin.math.abs(n.length - nq.length)
+                    if (score > best || (score == best && score > 0 && diff < bestDiff)) {
+                        best = score; bestGi = gi; bestUrl = url; bestDiff = diff
+                    }
+                }
+            }
+        }
+        if (best == 0) return false
+        curGroup = bestGi
+        play(bestUrl)
+        return true
+    }
+
     val activeWeb: WebView? get() = player
 
     /** Về trang chọn đài (trang ngoài cùng của TV). */
