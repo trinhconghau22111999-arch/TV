@@ -28,6 +28,15 @@
    ]
   },
   {
+   "name": "Đồng Tháp",
+   "channels": [
+    {
+     "name": "Truyền hình Đồng Tháp",
+     "url": "https://vtvgo.vn/channel/133"
+    }
+   ]
+  },
+  {
    "name": "Việt Nam",
    "channels": [
     {
@@ -137,15 +146,6 @@
     {
      "name": "Truyền hình Đồng Nai",
      "url": "https://vtvgo.vn/channel/234"
-    }
-   ]
-  },
-  {
-   "name": "Đồng Tháp",
-   "channels": [
-    {
-     "name": "Truyền hình Đồng Tháp",
-     "url": "https://vtvgo.vn/channel/133"
     }
    ]
   },
