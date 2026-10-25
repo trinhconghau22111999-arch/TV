@@ -19,9 +19,14 @@ android {
         versionName "2.0.${run}"
         // Chỉ giữ tài nguyên tiếng Việt + tiếng Anh của các thư viện (bỏ hàng chục ngôn ngữ không dùng) cho APK nhẹ hơn
         resConfigs 'vi', 'en'
+        // Không có thư viện native (.so) nào -> APK chạy trên MỌI CPU (arm, arm64, x86, x86_64), không đặt abiFilters
     }
     signingConfigs {
+        // Ký thêm kiểu v1 (JAR) cho cả bản debug lẫn release: một số máy Android 7.x / TV box / trình cài đặt cũ không đọc được APK chỉ có chữ ký v2
+        debug { enableV1Signing = true; enableV2Signing = true }
         release {
+            enableV1Signing = true
+            enableV2Signing = true
             // Chữ ký cố định lấy từ GitHub Secrets; build máy khác không có thì dùng chữ ký debug
             def ksPath = System.getenv('KEYSTORE_PATH')
             if (ksPath && new File(ksPath).exists()) {

@@ -133,13 +133,47 @@ class MainActivity : Activity(), FullscreenHost {
         // Truyền tệp chạy ngầm: khởi động trễ vài giây để giao diện hiện ra trước cho nhanh
         ui.postDelayed({
             if (isFinishing || transfer != null) return@postDelayed
-            transfer = TransferHost(this,
-                onTextEdit = { del, ins -> applyTextEdit(del, ins) },
-                onKeepAwake = { },
-                pickFile = { cb, params -> openFileChooser(cb, params) })
-            transfer?.start(hidden)
+            try {
+                transfer = TransferHost(this,
+                    onTextEdit = { del, ins -> applyTextEdit(del, ins) },
+                    onKeepAwake = { },
+                    pickFile = { cb, params -> openFileChooser(cb, params) })
+                transfer?.start(hidden)
+            } catch (e: Throwable) { transfer = null }   // máy thiếu/hỏng Android System WebView: bỏ qua, app vẫn chạy
         }, 2500)
         ui.postDelayed({ maybeAskDefaultHome() }, 600)
+        ui.postDelayed({ warnOldWebView() }, 1500)
+    }
+
+    // ---------------- WebView cũ (Android 7 chưa cập nhật) ----------------
+
+    /** Lấy số phiên bản Chrome của WebView từ chuỗi User-Agent; 0 nếu không đọc được. */
+    private fun webViewMajor(): Int {
+        return try {
+            val ua = android.webkit.WebSettings.getDefaultUserAgent(this)
+            Regex("Chrome/(\\d+)").find(ua)?.groupValues?.get(1)?.toInt() ?: 0
+        } catch (e: Throwable) { 0 }
+    }
+
+    /** WebView dưới bản 80 thì YouTube/truyền tệp dễ lỗi: nhắc cập nhật "Android System WebView" trên CH Play (hỏi một lần cho mỗi bản). */
+    private fun warnOldWebView() {
+        if (isFinishing) return
+        val v = webViewMajor()
+        if (v == 0 || v >= 80) return
+        val sp = getSharedPreferences("tv", MODE_PRIVATE)
+        if (sp.getInt("webviewWarned", 0) == v) return
+        sp.edit().putInt("webviewWarned", v).apply()
+        AlertDialog.Builder(this)
+            .setTitle("WebView của máy đã cũ (bản $v)")
+            .setMessage("YouTube và truyền tệp có thể lỗi. Hãy cập nhật \"Android System WebView\" (và Chrome) trên CH Play.")
+            .setPositiveButton("Mở CH Play") { _, _ ->
+                try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.webview"))) }
+                catch (e: Exception) {
+                    try { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=com.google.android.webview"))) } catch (e2: Exception) { }
+                }
+            }
+            .setNegativeButton("Để sau", null)
+            .show()
     }
 
     // ---------------- Đặt làm giao diện (màn hình chính) mặc định ----------------
@@ -298,7 +332,11 @@ class MainActivity : Activity(), FullscreenHost {
             return
         }
         hideFull()
-        setMode(m)
+        try { setMode(m) }
+        catch (e: Throwable) {            // không tạo được WebView (máy thiếu/đang cập nhật Android System WebView)
+            mode = 0; updateButtons()
+            Toast.makeText(this, "Máy chưa có WebView hoạt động, hãy cài/cập nhật Android System WebView", Toast.LENGTH_LONG).show()
+        }
     }
 
     override fun setBarVisible(v: Boolean) {
