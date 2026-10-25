@@ -1,23 +1,11 @@
 {
  "groups": [
   {
-   "name": "Vĩnh Long (THVL)",
+   "name": "Vĩnh Long",
    "channels": [
     {
-     "name": "THVL1",
-     "url": "https://thvli.vn/live/thvl1-hd"
-    },
-    {
-     "name": "THVL2",
-     "url": "https://thvli.vn/live/thvl2-hd"
-    },
-    {
-     "name": "THVL3",
-     "url": "https://thvli.vn/live/thvl3-hd"
-    },
-    {
-     "name": "THVL4",
-     "url": "https://thvli.vn/live/thvl4-hd"
+     "name": "Vĩnh Long",
+     "url": "https://vtvgo.vn/channel/10009"
     }
    ]
   },
