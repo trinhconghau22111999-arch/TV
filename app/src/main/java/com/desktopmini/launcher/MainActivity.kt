@@ -2,6 +2,8 @@ package com.desktopmini.launcher
 
 import android.Manifest
 import android.app.Activity
+import android.app.AlertDialog
+import android.app.role.RoleManager
 import android.bluetooth.BluetoothAdapter
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
@@ -43,6 +45,7 @@ private const val REQ_FILE = 3001
 private const val REQ_STORAGE = 3002
 private const val REQ_VOICE = 3003
 private const val REQ_VOICE_PERM = 3004
+private const val REQ_ROLE = 3005
 
 /** Biểu tượng pin tự vẽ: khung + mức pin + số %. */
 private class BatteryView(ctx: Context) : View(ctx) {
@@ -133,6 +136,45 @@ class MainActivity : Activity(), FullscreenHost {
             onKeepAwake = { },
             pickFile = { cb, params -> openFileChooser(cb, params) })
         transfer?.start(hidden)
+        ui.postDelayed({ maybeAskDefaultHome() }, 600)
+    }
+
+    // ---------------- Đặt làm giao diện (màn hình chính) mặc định ----------------
+
+    private fun isDefaultHome(): Boolean {
+        val i = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+        val ri = packageManager.resolveActivity(i, PackageManager.MATCH_DEFAULT_ONLY)
+        return ri?.activityInfo?.packageName == packageName
+    }
+
+    private fun maybeAskDefaultHome() {
+        if (isFinishing || isDefaultHome()) return
+        val sp = getSharedPreferences("tv", MODE_PRIVATE)
+        if (sp.getBoolean("noAskHome", false)) return
+        AlertDialog.Builder(this)
+            .setTitle("Đặt TV làm giao diện mặc định?")
+            .setMessage("Khi bấm nút Home, máy sẽ vào thẳng giao diện TV.")
+            .setPositiveButton("Đặt mặc định") { _, _ -> requestDefaultHome() }
+            .setNegativeButton("Để sau", null)
+            .setNeutralButton("Không hỏi lại") { _, _ -> sp.edit().putBoolean("noAskHome", true).apply() }
+            .show()
+    }
+
+    private fun requestDefaultHome() {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                val rm = getSystemService(Context.ROLE_SERVICE) as RoleManager
+                if (rm.isRoleAvailable(RoleManager.ROLE_HOME) && !rm.isRoleHeld(RoleManager.ROLE_HOME)) {
+                    startActivityForResult(rm.createRequestRoleIntent(RoleManager.ROLE_HOME), REQ_ROLE)
+                    return
+                }
+            }
+            // Android cũ: mở lại màn hình chính để hệ thống hỏi chọn ứng dụng, chọn TV rồi bấm "Luôn luôn"
+            startActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        } catch (e: Exception) {
+            try { startActivity(Intent(android.provider.Settings.ACTION_HOME_SETTINGS)) }
+            catch (e2: Exception) { Toast.makeText(this, "Hãy vào Cài đặt > Ứng dụng > Ứng dụng mặc định > Màn hình chính", Toast.LENGTH_LONG).show() }
+        }
     }
 
     // ---------------- Giao diện ----------------
