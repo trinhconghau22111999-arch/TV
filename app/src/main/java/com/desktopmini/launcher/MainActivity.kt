@@ -67,6 +67,7 @@ private class BatteryView(ctx: Context) : View(ctx) {
 class MainActivity : Activity(), FullscreenHost {
     private lateinit var content: FrameLayout
     private lateinit var barView: LinearLayout
+    private lateinit var panels: QuickPanels
     private lateinit var floatBack: TextView
     private var barH = 0
     private lateinit var fullLayer: FrameLayout
@@ -183,9 +184,9 @@ class MainActivity : Activity(), FullscreenHost {
         bar.addView(battery, LinearLayout.LayoutParams(dp(24), dp(18)))
         tvPct = small("--%").apply { setPadding(dp(3), 0, dp(8), 0) }
         bar.addView(tvPct, LinearLayout.LayoutParams(-2, -1))
-        tvWifi = small("WiFi", 11f, true).apply { setPadding(0, 0, dp(8), 0) }
+        tvWifi = small("WiFi", 12f, true).apply { setPadding(dp(8), 0, dp(8), 0) }
         bar.addView(tvWifi, LinearLayout.LayoutParams(-2, -1))
-        tvBt = small("BT", 11f, true).apply { setPadding(0, 0, dp(10), 0) }
+        tvBt = small("BT", 12f, true).apply { setPadding(dp(8), 0, dp(10), 0) }
         bar.addView(tvBt, LinearLayout.LayoutParams(-2, -1))
         tvTime = small("--:--", 18f, true).apply { setPadding(0, 0, dp(8), 0) }
         bar.addView(tvTime, LinearLayout.LayoutParams(-2, -1))
@@ -217,6 +218,9 @@ class MainActivity : Activity(), FullscreenHost {
             setOnClickListener { goBack() }
         }
         root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
+        panels = QuickPanels(this, root, barH)
+        tvWifi.setOnClickListener { panels.toggle(1) }
+        tvBt.setOnClickListener { panels.toggle(2) }
         hidden = FrameLayout(this)
         root.addView(hidden, FrameLayout.LayoutParams(1, 1))
         setContentView(root)
@@ -280,6 +284,7 @@ class MainActivity : Activity(), FullscreenHost {
     }
 
     private fun goBack() {
+        if (panels.isOpen()) { panels.hide(); return }
         if (fullView != null) { hideFull(); return }
         when (mode) {
             1 -> tv?.back()
@@ -362,6 +367,7 @@ class MainActivity : Activity(), FullscreenHost {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == 3010) panels.refresh(true)
         if (requestCode == REQ_VOICE_PERM && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) launchVoice()
     }
 
@@ -397,6 +403,7 @@ class MainActivity : Activity(), FullscreenHost {
     override fun onDestroy() {
         ui.removeCallbacksAndMessages(null)
         try { unregisterReceiver(batteryRx) } catch (e: Exception) { }
+        panels.hide()
         transfer?.destroy()
         tv?.destroy(); yt?.destroy()
         super.onDestroy()
