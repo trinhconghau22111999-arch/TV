@@ -115,9 +115,15 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
         if (scheme == "about") return true
         if (scheme != "https" && scheme != "http") return false
         val h = (u.host ?: return false).lowercase()
-        if (isYoutubeHost(h)) return !(u.path ?: "").startsWith("/redirect")
-        return h.startsWith("accounts.google.") || h.startsWith("consent.google.")
+        if (isYoutubeHost(h)) { inLogin = false; return !(u.path ?: "").startsWith("/redirect") }
+        if (h.startsWith("accounts.google.") || h.startsWith("consent.google.")) { inLogin = true; return true }
+        // Đang trong luồng đăng nhập Google: cho qua các trang Google khác (xác minh, myaccount, gstatic...) cho tới khi quay lại YouTube
+        return inLogin && isGoogleHost(h)
     }
+
+    @Volatile private var inLogin = false
+    private fun isGoogleHost(h: String) = hostIs(h, "google.com") || hostIs(h, "google.com.vn") ||
+        hostIs(h, "gstatic.com") || hostIs(h, "googleusercontent.com") || hostIs(h, "googleapis.com") || h == "g.co"
 
     private fun toastBlocked() {
         val now = System.currentTimeMillis()
@@ -146,7 +152,7 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
                     toastBlocked()
                     val html = "<meta name=viewport content='width=device-width,initial-scale=1'>" +
                         "<body style='background:#111;color:#eee;font:16px sans-serif;text-align:center;padding:48px 20px'>" +
-                        "Mục này chỉ mở được YouTube.<br><br>Bấm ← để quay lại.</body>"
+                        "Mục này chỉ mở được YouTube.<br><br>(" + (r.url.host ?: "") + ")<br><br>Bấm ← để quay lại.</body>"
                     return WebResourceResponse("text/html", "utf-8", ByteArrayInputStream(html.toByteArray(Charsets.UTF_8)))
                 }
                 return null
