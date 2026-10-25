@@ -240,7 +240,6 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     @SuppressLint("SetJavaScriptEnabled")
     private fun play(url: String) {
         level = 2
-        full.setBarVisible(false)
         chooser.visibility = View.GONE
         val w = WebView(act)
         configureWebView(act, w)
