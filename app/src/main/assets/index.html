@@ -1244,7 +1244,7 @@ const lsGet=k=>{try{return localStorage.getItem(k)}catch(e){return null}};
 const lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}};
 /* Ứng dụng ngoài đang mở (Zalo...) -> hiện thẻ trong đa nhiệm */
 const EXTK='dm-ext';
-let extRun=[]; try{extRun=JSON.parse(lsGet(EXTK)||'[]').filter(x=>x&&x.pkg&&x.pkg!=='com.desktopmini.web')}catch(e){extRun=[]}
+let extRun=[]; try{extRun=JSON.parse(lsGet(EXTK)||'[]').filter(x=>x&&x.pkg&&x.pkg!=='com.desktopmini.tvweb')}catch(e){extRun=[]}
 const extSave=()=>lsSet(EXTK,JSON.stringify(extRun));
 function extLaunch(pkg){
   const A=window.AndroidLauncher; if(!A)return;
@@ -1521,7 +1521,7 @@ Object.keys(EXTINFO).forEach(k=>{const o=EXTINFO[k];if(o)extReg(k,o.label,o.icon
 const LP_APPS=['files','downloads','browser','webbrowser','youtube','mail','calendar','photos','camera','music','notes','typing','msword','msexcel','msppt','msoffice','calc','clock','recorder','omem','zalo','facebook','settings','trash'];
 const DOCK_DEF=['launchpad','files','webbrowser','youtube','mail','photos','camera','notes','omem','zalo','facebook','settings'];
 /* Khóa của từng màn hình app phụ (Trình duyệt, Ổ mềm) để Dock nổi biết icon ghim nào đang mở */
-const COMPK={browser:'com.desktopmini.web/com.desktopmini.web.BrowserActivity',omem:'com.desktopmini.web/com.desktopmini.web.OmemActivity'};
+const COMPK={browser:'com.desktopmini.tvweb/com.desktopmini.web.BrowserActivity',omem:'com.desktopmini.tvweb/com.desktopmini.web.OmemActivity'};
 /* Dock và màn hình desktop do người dùng tự sắp xếp (lưu lại để mở app lần sau vẫn giữ) */
 const DOCK_GONE=['browser','calendar','music','typing','msword','msexcel','msppt','msoffice','calc','clock','recorder','drive','downloads'];
 const DOCK=(()=>{let s=jget('dm-dock',null);if(Array.isArray(s)&&!jget('dm-dock-v2',false)){s=s.filter(id=>DOCK_GONE.indexOf(id)<0);jset('dm-dock',s);jset('dm-dock-v2',true)}

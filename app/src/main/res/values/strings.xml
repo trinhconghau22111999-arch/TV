@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Desktop Mini</string>
+    <string name="app_name">Desktop Mini TV</string>
     <string name="browser_name">Duyệt web</string>
     <string name="a11y_desc">Cho phép Desktop Mini khóa màn hình, mở menu nguồn, và hiện nút tròn \"Desktop\" nổi trên các ứng dụng khác (bấm để về màn hình Desktop, kéo để đổi vị trí).</string>
 </resources>

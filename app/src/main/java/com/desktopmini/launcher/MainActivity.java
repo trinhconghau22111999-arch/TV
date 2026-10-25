@@ -608,7 +608,7 @@ public class MainActivity extends Activity {
         } catch (Throwable t) { return false; }
     }
 
-    private static final String SS_CMD = "pm grant com.desktopmini.launcher android.permission.WRITE_SECURE_SETTINGS";
+    private static final String SS_CMD = "pm grant com.desktopmini.tv android.permission.WRITE_SECURE_SETTINGS";
     private boolean hasSecureWrite() {
         return checkSelfPermission("android.permission.WRITE_SECURE_SETTINGS") == PackageManager.PERMISSION_GRANTED;
     }
@@ -1137,7 +1137,8 @@ public class MainActivity extends Activity {
     /* ================= App phụ "Trình duyệt + Ổ mềm" (Gecko), tách riêng khỏi WebView giao diện =================
      * Hai app này dùng lõi Gecko (Firefox) nên chạy trong app riêng (com.desktopmini.web); app chính chỉ dùng WebView hệ thống.
      * APK app phụ đóng gói sẵn trong assets/web/web.apk, app chính hỏi cài (hoặc cập nhật) ngay lần mở đầu tiên. Biểu tượng vẫn nằm trên Dock/Launchpad như cũ. */
-    static final String WEB_PKG = "com.desktopmini.web";
+    static final String WEB_PKG = "com.desktopmini.tvweb";
+    static final String WEB_CLS = "com.desktopmini.web"; // tên lớp (namespace) giữ nguyên, chỉ applicationId đổi
     private boolean companionAsked;
     volatile boolean htmlEditing = false;
 
@@ -1157,7 +1158,7 @@ public class MainActivity extends Activity {
         if (companionVersion() < 0) { toastLong("Chưa cài app phụ Trình duyệt + Ổ mềm. Hãy cài file web-release.apk trong cùng bản build."); return; }
         boolean om = "omem".equals(which);
         Intent i = new Intent();
-        i.setClassName(WEB_PKG, WEB_PKG + (om ? ".OmemActivity" : ".BrowserActivity"));
+        i.setClassName(WEB_PKG, WEB_CLS + (om ? ".OmemActivity" : ".BrowserActivity"));
         if (om) { if (arg != null && arg.length() > 0) i.putExtra("profile", arg); i.putExtra("upload", upload); }
         else if (arg != null && (arg.startsWith("http://") || arg.startsWith("https://"))) i.putExtra("url", arg);
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);

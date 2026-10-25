@@ -542,7 +542,7 @@ public class BrowserActivity extends Activity implements Downloads.Listener {
     /** "Mở": nhờ app Tải xuống của Desktop Mini mở tệp (như bấm tệp trong app đó). Không có Desktop Mini thì mở bằng app khác như cũ. */
     private void openDownloaded(Downloads.Item it) {
         try {
-            Intent i = new Intent().setClassName("com.desktopmini.launcher", "com.desktopmini.launcher.MainActivity")
+            Intent i = new Intent().setClassName("com.desktopmini.tv", "com.desktopmini.launcher.MainActivity")
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT)
                 .putExtra("openDownloaded", pathOfDownload(it)).putExtra("openDownloadedName", it.name);
             startActivity(i);

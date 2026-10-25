@@ -13,13 +13,13 @@ android {
     namespace 'com.desktopmini.web'
     compileSdk 34
     defaultConfig {
-        applicationId 'com.desktopmini.web'
+        applicationId 'com.desktopmini.tvweb'
         minSdk 24
         targetSdk 34
         // Cùng số phiên bản với app chính (cùng một lần build) để app chính biết bản phụ đã cũ hay chưa
         def run = (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
         versionCode run
-        versionName "1.0.${run}"
+        versionName "2.0.${run}"
         def abis = ((project.findProperty('abis') ?: 'x86') as String).split(',').collect { it.trim() }.findAll { it }
         ndk { abiFilters.addAll(abis) }
         resConfigs 'vi', 'en'

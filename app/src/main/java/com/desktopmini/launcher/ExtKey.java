@@ -12,10 +12,11 @@ import android.graphics.drawable.Drawable;
  * và chấm đang chạy riêng.
  */
 final class ExtKey {
-    static final String WEB_PKG = "com.desktopmini.web";
+    static final String WEB_PKG = "com.desktopmini.tvweb";
+    static final String WEB_CLS = "com.desktopmini.web";
     /** Khóa của màn hình "Trình duyệt" và "Ổ mềm" trong app phụ. */
-    static final String BROWSER = WEB_PKG + "/" + WEB_PKG + ".BrowserActivity";
-    static final String OMEM = WEB_PKG + "/" + WEB_PKG + ".OmemActivity";
+    static final String BROWSER = WEB_PKG + "/" + WEB_CLS + ".BrowserActivity";
+    static final String OMEM = WEB_PKG + "/" + WEB_CLS + ".OmemActivity";
 
     /** Khóa của cửa sổ đang hiện; null nếu là cửa sổ phụ của app phụ (hộp thoại...) không cần theo dõi riêng. */
     static String of(String pkg, CharSequence cls) {
