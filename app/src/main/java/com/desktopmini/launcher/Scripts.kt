@@ -111,24 +111,30 @@ const val VOICE_HOOK_JS = """
 })();
 """
 
-/** Ẩn nút "Mở ứng dụng" / "Open app" và banner mời tải app trên trang YouTube (theo dõi cả khi trang đổi nội dung). */
+/** Nút "Mở ứng dụng" / "Open app" của YouTube được đổi thành nút "Đăng nhập" (mở trang đăng nhập Google); ẩn banner mời tải app. */
 const val HIDE_OPEN_APP_JS = """
 (function(){
   if (window.__hideOpenApp) return; window.__hideOpenApp = true;
   var st = document.createElement('style');
-  st.textContent = 'ytm-open-app-banner-renderer,ytm-mealbar-promo-renderer,ytm-open-app-button-renderer,.open-app-button,.mobile-topbar-header-sign-in-button{display:none!important}';
+  st.textContent = 'ytm-open-app-banner-renderer,ytm-mealbar-promo-renderer,ytm-open-app-button-renderer,.open-app-button{display:none!important}';
   (document.head || document.documentElement).appendChild(st);
   var RX = /^(mở ứng dụng|open app|mở app|open in app)$/i;
+  var LOGIN = 'https://accounts.google.com/ServiceLogin?service=youtube&hl=vi&continue=' + encodeURIComponent('https://www.youtube.com/?hl=vi&gl=VN&persist_hl=1');
+  function relabel(e){
+    var w = document.createTreeWalker(e, NodeFilter.SHOW_TEXT, null), n;
+    while ((n = w.nextNode())) { if (/\S/.test(n.nodeValue)) { n.nodeValue = 'Đăng nhập'; } }
+    if (e.getAttribute && e.getAttribute('aria-label')) e.setAttribute('aria-label', 'Đăng nhập');
+  }
   function sweep(){
-    var els = document.querySelectorAll('a,button,ytm-button-renderer,yt-button-shape,ytm-menu-item');
+    var els = document.querySelectorAll('a,button,ytm-button-renderer,yt-button-shape');
     for (var i = 0; i < els.length; i++) {
       var e = els[i];
       if (e.__oa) continue;
       var t = (e.innerText || e.getAttribute('aria-label') || '').replace(/\s+/g,' ').trim();
       if (t && RX.test(t)) {
-        var h = e.closest('ytm-button-renderer,ytm-menu-item,yt-button-shape') || e;
-        h.style.setProperty('display','none','important');
         e.__oa = true;
+        relabel(e);
+        e.addEventListener('click', function(ev){ ev.preventDefault(); ev.stopPropagation(); ev.stopImmediatePropagation(); location.href = LOGIN; }, true);
       }
     }
   }
