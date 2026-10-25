@@ -60,12 +60,14 @@ class QuickPanels(private val act: Activity, host: FrameLayout, topPx: Int) {
     private val rx = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) {
             i ?: return
-            if (i.action == BluetoothDevice.ACTION_FOUND) {
-                val d = i.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
-                if (d != null) { found[d.address] = d; if (kind == 2) refresh(false) }
-            } else {
-                refresh(i.action == WifiManager.WIFI_STATE_CHANGED_ACTION || i.action == BluetoothAdapter.ACTION_STATE_CHANGED)
-            }
+            try {
+                if (i.action == BluetoothDevice.ACTION_FOUND) {
+                    val d = i.getParcelableExtra<BluetoothDevice>(BluetoothDevice.EXTRA_DEVICE)
+                    if (d != null) { found[d.address] = d; if (kind == 2) refresh(false) }
+                } else {
+                    refresh(i.action == WifiManager.WIFI_STATE_CHANGED_ACTION || i.action == BluetoothAdapter.ACTION_STATE_CHANGED)
+                }
+            } catch (e: Throwable) { fail(e) }
         }
     }
 
@@ -98,7 +100,14 @@ class QuickPanels(private val act: Activity, host: FrameLayout, topPx: Int) {
 
     fun isOpen(): Boolean = panel.visibility == View.VISIBLE
 
-    fun toggle(k: Int) { if (isOpen() && kind == k) hide() else show(k) }
+    private fun fail(e: Throwable) {
+        try { status.text = "Lỗi: " + e.javaClass.simpleName + " " + (e.message ?: "") } catch (x: Throwable) { }
+    }
+
+    fun toggle(k: Int) {
+        try { if (isOpen() && kind == k) hide() else show(k) }
+        catch (e: Throwable) { kind = k; panel.visibility = View.VISIBLE; title.text = if (k == 1) "WiFi" else "Bluetooth"; fail(e) }
+    }
 
     fun hide() {
         panel.visibility = View.GONE
@@ -130,8 +139,7 @@ class QuickPanels(private val act: Activity, host: FrameLayout, topPx: Int) {
         f.addAction(BluetoothDevice.ACTION_BOND_STATE_CHANGED)
         f.addAction(BluetoothDevice.ACTION_ACL_CONNECTED)
         f.addAction(BluetoothDevice.ACTION_ACL_DISCONNECTED)
-        act.registerReceiver(rx, f)
-        registered = true
+        try { act.registerReceiver(rx, f); registered = true } catch (e: Throwable) { fail(e) }
     }
 
     private fun unregister() {
@@ -141,7 +149,8 @@ class QuickPanels(private val act: Activity, host: FrameLayout, topPx: Int) {
     }
 
     fun refresh(scan: Boolean = true) {
-        if (kind == 1) wifiRefresh(scan) else if (kind == 2) btRefresh(scan)
+        try { if (kind == 1) wifiRefresh(scan) else if (kind == 2) btRefresh(scan) }
+        catch (e: Throwable) { fail(e) }
     }
 
     // ---------------- Tiện ích giao diện ----------------
@@ -187,6 +196,10 @@ class QuickPanels(private val act: Activity, host: FrameLayout, topPx: Int) {
     // ---------------- Công tắc ----------------
 
     private fun onSwitch(on: Boolean) {
+        try { onSwitchInner(on) } catch (e: Throwable) { fail(e) }
+    }
+
+    private fun onSwitchInner(on: Boolean) {
         if (kind == 1) {
             if (Build.VERSION.SDK_INT >= 29) {
                 toast("Android này không cho app tự bật/tắt WiFi, đang mở cài đặt hệ thống")
