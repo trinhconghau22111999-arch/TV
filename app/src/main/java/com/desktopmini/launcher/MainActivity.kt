@@ -24,6 +24,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.os.PowerManager
 import android.speech.RecognizerIntent
 import android.view.Gravity
 import android.view.KeyEvent
@@ -84,6 +85,8 @@ class MainActivity : Activity(), FullscreenHost {
     private lateinit var tvWifi: TextView
     private lateinit var tvBt: TextView
     private lateinit var battery: BatteryView
+    private lateinit var remote: RemoteController
+    private var connWake: PowerManager.WakeLock? = null
 
     private var mode = 0                  // 0 = trang trống, 1 = TV, 2 = YouTube
     private var tv: TvPane? = null
@@ -118,7 +121,16 @@ class MainActivity : Activity(), FullscreenHost {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setBackgroundDrawableResource(android.R.color.black)
-        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        @Suppress("DEPRECATION")
+        window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON
+            or WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+            or WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON
+            or WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD)
+        // Giu CPU/mang song khi man hinh bi tat tu xa de remote van ket noi va bat lai duoc
+        try {
+            connWake = (getSystemService(Context.POWER_SERVICE) as PowerManager)
+                .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "tv:connection").also { it.setReferenceCounted(false); it.acquire() }
+        } catch (e: Exception) { }
         buildUi()
         hideSystemBars()
 
@@ -136,6 +148,7 @@ class MainActivity : Activity(), FullscreenHost {
             transfer = TransferHost(this,
                 onTextEdit = { del, ins -> applyTextEdit(del, ins) },
                 onKeepAwake = { },
+                onRemote = { json -> remote.handle(json) },
                 pickFile = { cb, params -> openFileChooser(cb, params) })
             transfer?.start(hidden)
         }, 2500)
@@ -264,6 +277,7 @@ class MainActivity : Activity(), FullscreenHost {
         }
         root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
         panels = QuickPanels(this, root, barH)
+        remote = RemoteController(this, root, { if (mode == 1) tv?.activeWeb else if (mode == 2) yt?.web else null }, { remoteVoice(it) })
         tvWifi.setOnClickListener { panels.toggle(1) }
         tvBt.setOnClickListener { panels.toggle(2) }
         hidden = FrameLayout(this)
@@ -384,6 +398,20 @@ class MainActivity : Activity(), FullscreenHost {
         catch (e: Exception) { fileCb?.onReceiveValue(null); fileCb = null; false }
     }
 
+    // Remote: noi tren dien thoai -> mo YouTube tim va tu mo video dau tien
+    private fun remoteVoice(q: String) {
+        if (mode != 2) { hideFull(); setMode(2) }
+        yt?.search(q)
+        val js = "(function(){var a=document.querySelector('a[href*=\"/watch?v=\"]');if(a){a.click();return 1}return 0})()"
+        fun tryOpen(n: Int) {
+            ui.postDelayed({
+                if (isFinishing || mode != 2) return@postDelayed
+                yt?.web?.evaluateJavascript(js) { r -> if (r != "1" && n < 4) tryOpen(n + 1) }
+            }, 3000)
+        }
+        tryOpen(0)
+    }
+
     // Điện thoại gửi {del, ins}: xoá `del` ký tự trước con trỏ rồi chèn `ins` vào ô nhập đang chọn của TV/YouTube.
     private fun applyTextEdit(delRaw: Int, ins: String) {
         val wv: WebView = (if (mode == 1) tv?.activeWeb else if (mode == 2) yt?.web else null) ?: return
@@ -450,6 +478,7 @@ class MainActivity : Activity(), FullscreenHost {
         try { unregisterReceiver(batteryRx) } catch (e: Exception) { }
         panels.hide()
         transfer?.destroy()
+        try { connWake?.let { if (it.isHeld) it.release() } } catch (e: Exception) { }
         tv?.destroy(); yt?.destroy()
         super.onDestroy()
     }

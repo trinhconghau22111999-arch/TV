@@ -33,6 +33,7 @@ class TransferHost(
     private val act: Activity,
     private val onTextEdit: (Int, String) -> Unit,
     private val onKeepAwake: (Boolean) -> Unit,
+    private val onRemote: (String) -> Unit,
     private val pickFile: (ValueCallback<Array<Uri>>?, WebChromeClient.FileChooserParams?) -> Boolean
 ) {
     private val ctx: Context get() = act
@@ -243,6 +244,12 @@ class TransferHost(
         @JavascriptInterface
         fun textEdit(del: Int, ins: String) {
             runOnUiThread { onTextEdit(del, ins) }
+        }
+
+        // Lenh dieu khien tu app DK_TV (JSON {"type":"remote",...})
+        @JavascriptInterface
+        fun remote(json: String) {
+            runOnUiThread { onRemote(json) }
         }
 
         @JavascriptInterface

@@ -260,6 +260,7 @@
           var msg; try { msg = JSON.parse(e.data); } catch (err) { return; }
           if (msg.type === 'ping') slot.lastPingAt = Date.now();
           else if (msg.type === 'text-edit' && A.textEdit) { try { A.textEdit(msg.del | 0, typeof msg.ins === 'string' ? msg.ins : ''); } catch (er) {} }
+          else if (msg.type === 'remote' && A.remote) { try { A.remote(e.data); } catch (er) {} }
           else if (msg.type === 'file-start') startIncoming(i, msg);
           else if (msg.type === 'file-end') finishIncoming(i, msg.transferId);
           else if (msg.type === 'file-cancel') cancelIncoming(i, msg.transferId, false);
