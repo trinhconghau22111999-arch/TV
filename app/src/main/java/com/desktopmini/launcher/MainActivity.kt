@@ -409,7 +409,7 @@ class MainActivity : Activity(), FullscreenHost {
         }
         if (mode != 2) { hideFull(); setMode(2) }
         yt?.search(q)
-        val js = "(function(){var a=document.querySelector('a[href*=\\"/watch?v=\\"]');if(a){a.click();return 1}return 0})()"
+        val js = "(function(){var a=document.querySelector('a[href*=\"/watch?v=\"]');if(a){a.click();return 1}return 0})()"
         fun tryOpen(n: Int) {
             ui.postDelayed({
                 if (isFinishing || mode != 2) return@postDelayed
