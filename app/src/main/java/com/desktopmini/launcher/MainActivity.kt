@@ -194,6 +194,11 @@ class MainActivity : Activity(), FullscreenHost {
 
         col.addView(bar, LinearLayout.LayoutParams(-1, barH))
         content = FrameLayout(this).apply { setBackgroundColor(Color.BLACK) }
+        // Hình nền trang chủ (hiện khi chưa mở TV/YouTube); các khung TV/YouTube nằm phủ lên trên
+        content.addView(android.widget.ImageView(this).apply {
+            scaleType = android.widget.ImageView.ScaleType.CENTER_CROP
+            setImageResource(R.drawable.wallpaper)
+        }, FrameLayout.LayoutParams(-1, -1))
         col.addView(content, LinearLayout.LayoutParams(-1, 0, 1f))
         root.addView(col, FrameLayout.LayoutParams(-1, -1))
 
