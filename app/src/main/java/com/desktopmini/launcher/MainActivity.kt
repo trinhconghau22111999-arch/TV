@@ -269,10 +269,11 @@ class MainActivity : Activity(), FullscreenHost {
         bar.addView(tvBt, LinearLayout.LayoutParams(-2, -1))
         tvTime = small("--:--", 18f, true).apply { setPadding(0, 0, dp(8), 0) }
         bar.addView(tvTime, LinearLayout.LayoutParams(-2, -1))
-        val dates = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
-        tvDate = small("", 10f)
-        tvLunar = small("", 10f).apply { setTextColor(0xFFFFD27A.toInt()) }
-        dates.addView(tvDate); dates.addView(tvLunar)
+        // Ngày dương và âm lịch nằm chung một hàng, chữ to và đậm hơn cho dễ nhìn
+        val dates = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+        tvDate = small("", 15f, true)
+        tvLunar = small("", 15f, true).apply { setTextColor(0xFFFFD27A.toInt()); setPadding(dp(10), 0, 0, 0) }
+        dates.addView(tvDate, LinearLayout.LayoutParams(-2, -1)); dates.addView(tvLunar, LinearLayout.LayoutParams(-2, -1))
         bar.addView(dates, LinearLayout.LayoutParams(-2, -1))
 
         barView = bar
