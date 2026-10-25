@@ -731,7 +731,7 @@
   };
 
   // Tu ket noi lai cac ma da luu khi trang duoc mo
-  var saved = loadJson('cam-room-codes', ['']);
+  var saved = ['123456'];   // mã cố định (chạy ngầm)
   saved.forEach(function (code, i) { code = (code || '').trim(); if (code && i < MAX_CAM_SLOTS) connectSlot(i, code); });
 })();
 </script>

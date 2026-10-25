@@ -3,10 +3,6 @@ name: Build APK
 on:
   push:
   workflow_dispatch:
-    inputs:
-      abis:
-        description: 'CPU đóng gói, ngăn cách bằng dấu phẩy (mặc định x86)'
-        default: 'x86'
 
 concurrency:
   group: build-${{ github.ref }}
@@ -36,19 +32,17 @@ jobs:
             echo "KEYSTORE_PATH=$RUNNER_TEMP/release.keystore" >> "$GITHUB_ENV"
           fi
 
-      - name: Build APK (app chính + app phụ)
+      - name: Build APK
         shell: bash
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle assembleRelease --no-daemon -Pabis="${{ github.event.inputs.abis || 'x86' }}"
+        run: gradle assembleRelease --no-daemon
 
       - name: Lưu APK để tải
         uses: actions/upload-artifact@v4
         with:
-          name: DesktopMiniLauncher-apk
-          path: |
-            app/build/outputs/apk/release/*.apk
-            web/build/outputs/apk/release/*.apk
+          name: DesktopMiniTV-apk
+          path: app/build/outputs/apk/release/*.apk
           retention-days: 7

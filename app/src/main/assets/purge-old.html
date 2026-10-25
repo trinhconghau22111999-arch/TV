@@ -1,9 +1,0 @@
-<!doctype html>
-<meta charset="utf-8">
-<title></title>
-<script>
-/* Chạy một lần (MainActivity.purgeOldFileOrigin): xóa dữ liệu lưu cũ của origin file:// sau khi giao diện chuyển sang https://appassets.androidplatform.net */
-try { localStorage.clear(); } catch (e) {}
-try { sessionStorage.clear(); } catch (e) {}
-try { if (window.indexedDB && indexedDB.databases) indexedDB.databases().then(function (l) { l.forEach(function (d) { indexedDB.deleteDatabase(d.name); }); }); } catch (e) {}
-</script>

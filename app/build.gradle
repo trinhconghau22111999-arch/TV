@@ -4,10 +4,7 @@ plugins {
 }
 dependencies {
     implementation 'androidx.core:core:1.13.1'
-    // GeckoView (Firefox) KHÔNG còn nằm trong app chính: nó chạy trong app phụ :web (Trình duyệt + Ổ mềm), đóng gói vào assets/web/web.apk
-    // ---- App con "Duyệt web" (chép từ repo Webandr) ----
     implementation 'androidx.webkit:webkit:1.11.0'
-    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
 }
 android {
     namespace 'com.desktopmini.launcher'
@@ -20,10 +17,6 @@ android {
         def run = (System.getenv('GITHUB_RUN_NUMBER') ?: '1').toInteger()
         versionCode run
         versionName "2.0.${run}"
-        // Bản này chỉ dành cho máy Lenovo Yoga Book YB1-X90F (chip Intel, Android 32-bit): chỉ đóng gói x86 nên APK nhẹ hơn nhiều, nhưng KHÔNG cài được trên điện thoại ARM.
-        // Muốn đóng cho máy khác: -Pabis=arm64-v8a (hoặc nhập ở nút Run workflow), ví dụ 'arm64-v8a,x86_64,x86' cho cả ba loại CPU
-        def abis = ((project.findProperty('abis') ?: 'x86') as String).split(',').collect { it.trim() }.findAll { it }
-        ndk { abiFilters.addAll(abis) }
         // Chỉ giữ tài nguyên tiếng Việt + tiếng Anh của các thư viện (bỏ hàng chục ngôn ngữ không dùng) cho APK nhẹ hơn
         resConfigs 'vi', 'en'
     }
@@ -43,8 +36,8 @@ android {
         release {
             signingConfig signingConfigs.release.storeFile ? signingConfigs.release : signingConfigs.debug
             // R8: bỏ code/tài nguyên không dùng. Quy tắc giữ cầu JavaScript nằm trong proguard-rules.pro
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
+            shrinkResources false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -52,8 +45,7 @@ android {
     kotlinOptions { jvmTarget = '17' }
     lint { abortOnError false; checkReleaseBuilds false }
     // Các mảnh WebView (zip đã nén sẵn) trong assets/webview và APK app phụ trong assets/web: không nén lại để build nhanh và đọc nhanh
-    androidResources { noCompress += ['part', 'apk'] }
-    packaging {
+        packaging {
         jniLibs { useLegacyPackaging = true }
         resources.excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*', 'META-INF/INDEX.LIST']
     }
