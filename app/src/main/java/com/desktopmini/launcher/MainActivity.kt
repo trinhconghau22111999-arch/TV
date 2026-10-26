@@ -28,6 +28,7 @@ import android.os.PowerManager
 import android.speech.RecognizerIntent
 import android.view.Gravity
 import android.view.KeyEvent
+import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.WindowManager
@@ -349,6 +350,12 @@ class MainActivity : Activity(), FullscreenHost {
             1 -> tv?.back()
             2 -> yt?.back()
         }
+    }
+
+    // Khoa cam ung: nuot moi cham tren man hinh TV. Chuot ao cua remote gui thang vao root nen van hoat dong.
+    override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
+        if (::remote.isInitialized && remote.touchLocked) return true
+        return super.dispatchTouchEvent(ev)
     }
 
     @Deprecated("Deprecated in Java")

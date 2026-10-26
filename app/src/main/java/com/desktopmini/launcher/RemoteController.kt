@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
 /**
  * Nhan lenh tu app DK_TV (dien thoai) qua kenh truyen tep: {"type":"remote","action":...}
  *   key (up/down/left/right/ok), move (dx,dy), click, scroll (dy), screen (on), voice (q),
- *   volume / brightness (level 0..100), quality (q = 360 | 720).
+ *   volume / brightness (level 0..100), quality (q = 360 | 720), touchlock (on).
  * Con tro chuot la 1 cham tron ve de len tren cung [root]; nhap = tiep xuc gia lap gui vao [root].
  */
 class RemoteController(
@@ -35,6 +35,9 @@ class RemoteController(
     private val onVoice: (String) -> Unit
 ) {
     private val ui = Handler(Looper.getMainLooper())
+
+    /** true = TV khong nhan cam ung truc tiep nua (chi dieu khien bang remote tren dien thoai). Khong luu: mo lai app la tu bat lai. */
+    @Volatile var touchLocked = false
     private var cx = 0f
     private var cy = 0f
     private var placed = false
@@ -89,6 +92,7 @@ class RemoteController(
             "volume" -> setVolume(o.optInt("level", -1))
             "brightness" -> setBrightness(o.optInt("level", -1))
             "quality" -> setQuality(o.optInt("q"))
+            "touchlock" -> touchLocked = o.optBoolean("on", false)
         }
     }
 
