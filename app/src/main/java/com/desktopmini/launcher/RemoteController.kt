@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
 /**
  * Nhan lenh tu app DK_TV (dien thoai) qua kenh truyen tep: {"type":"remote","action":...}
  *   key (up/down/left/right/ok), move (dx,dy), click, scroll (dy), screen (on), voice (q),
- *   volume / brightness (level 0..100), quality (q = 360 | 720), touchlock (on), fullscreen.
+ *   volume / brightness (level 0..100), quality (q = 360 | 720), touchlock (on), fullscreen, media (cmd = rew | fwd | playpause | next).
  * Con tro chuot la 1 cham tron ve de len tren cung [root]; nhap = tiep xuc gia lap gui vao [root].
  */
 class RemoteController(
@@ -41,6 +41,25 @@ class RemoteController(
 
     /** Dat boi MainActivity: bam nut phong to tren remote (dang toan man hinh thi thu nho lai). */
     var onFullscreen: (() -> Unit)? = null
+
+    /** Dat boi MainActivity: "tiep theo" - TV: kenh ke tiep trong dai; tra false thi dung lenh cua trang (YouTube). */
+    var onNext: (() -> Boolean)? = null
+
+    /** Nut media duoi cung remote: rew / fwd (10 giay), playpause (1 nut bat/tat), next (video/kenh ke tiep). */
+    private fun media(cmd: String) {
+        val wv = activeWeb() ?: return
+        val js = when (cmd) {
+            "rew" -> "var v=document.querySelector('video');if(v&&isFinite(v.duration))v.currentTime=Math.max(0,v.currentTime-10);"
+            "fwd" -> "var v=document.querySelector('video');if(v&&isFinite(v.duration))v.currentTime=Math.min(v.duration,v.currentTime+10);"
+            "playpause" -> "var v=document.querySelector('video');if(v){if(v.paused){var r=v.play();if(r&&r.catch)r.catch(function(){});}else v.pause();}"
+            "next" -> {
+                if (onNext?.invoke() == true) return
+                "var p=document.getElementById('movie_player');if(p&&p.nextVideo){p.nextVideo();}else{var b=document.querySelector('.ytp-next-button,button[aria-label*=\"Next\"],button[aria-label*=\"Tiếp\"]');if(b)b.click();}"
+            }
+            else -> return
+        }
+        wv.evaluateJavascript("(function(){try{$js}catch(e){}})()", null)
+    }
     private var cx = 0f
     private var cy = 0f
     private var placed = false
@@ -97,6 +116,7 @@ class RemoteController(
             "quality" -> setQuality(o.optInt("q"))
             "touchlock" -> touchLocked = o.optBoolean("on", false)
             "fullscreen" -> onFullscreen?.invoke()
+            "media" -> media(o.optString("cmd"))
         }
     }
 

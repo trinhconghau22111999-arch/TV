@@ -264,6 +264,7 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     @SuppressLint("SetJavaScriptEnabled")
     private fun play(url: String) {
         level = 2
+        curUrl = url
         chooser.visibility = View.GONE
         val w = WebView(act)
         configureWebView(act, w)
@@ -333,6 +334,19 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
     }
 
     val activeWeb: WebView? get() = player
+
+    private var curUrl = ""
+
+    /** Remote: sang kênh kế tiếp trong cùng đài (vòng lại kênh đầu). false nếu chưa xem kênh nào. */
+    fun nextChannel(): Boolean {
+        if (level != 2 || curGroup < 0) return false
+        val list = groups[curGroup].second
+        if (list.size < 2) return false
+        val i = list.indexOfFirst { it.second == curUrl }
+        stopPlayer()
+        play(list[(i + 1).mod(list.size)].second)
+        return true
+    }
 
     /** Về trang chọn đài (trang ngoài cùng của TV). */
     fun home() { showGroups() }
