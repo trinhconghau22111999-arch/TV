@@ -169,7 +169,11 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
     fun search(q: String) { web.loadUrl("https://www.youtube.com/results?search_query=" + Uri.encode(q)) }
     // Ve trang chu va xoa lich su duyet cu (nut ← khong quay lai video truoc do nua)
     private var clearHistoryOnFinish = false
-    fun home() { clearHistoryOnFinish = true; web.loadUrl(YT_HOME) }
+    fun home() {
+        clearHistoryOnFinish = true
+        web.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(v){try{v.pause()}catch(e){}})", null)
+        web.loadUrl(YT_HOME)
+    }
     fun back(): Boolean { return if (web.canGoBack()) { web.goBack(); true } else false }
     fun onPause() { CookieManager.getInstance().flush(); web.onPause() }
     fun onResume() { web.onResume() }
@@ -283,7 +287,12 @@ class TvPane(private val act: Activity, private val full: FullscreenHost) {
         full.setBarVisible(true)
         val w = player ?: return
         player = null
-        try { w.loadUrl("about:blank"); (w.parent as? ViewGroup)?.removeView(w); w.destroy() } catch (e: Exception) { }
+        try {
+            w.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(v){try{v.pause()}catch(e){}})", null)
+            w.onPause()
+            (w.parent as? ViewGroup)?.removeView(w)       // gỡ khỏi màn hình ngay để menu hiện tức thì
+        } catch (e: Exception) { }
+        view.postDelayed({ try { w.loadUrl("about:blank"); w.destroy() } catch (e: Exception) { } }, 300)
     }
 
     private fun normName(t: String): String {

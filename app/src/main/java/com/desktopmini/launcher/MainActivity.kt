@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.role.RoleManager
-import android.bluetooth.BluetoothAdapter
 import android.content.ActivityNotFoundException
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,10 +14,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
 import android.net.Uri
-import android.net.wifi.WifiManager
 import android.os.BatteryManager
 import android.os.Build
 import android.os.Bundle
@@ -72,7 +68,6 @@ private class BatteryView(ctx: Context) : View(ctx) {
 class MainActivity : Activity(), FullscreenHost {
     private lateinit var content: FrameLayout
     private lateinit var barView: LinearLayout
-    private lateinit var panels: QuickPanels
     private lateinit var floatBack: TextView
     private var barH = 0
     private lateinit var fullLayer: FrameLayout
@@ -83,8 +78,6 @@ class MainActivity : Activity(), FullscreenHost {
     private lateinit var tvDate: TextView
     private lateinit var tvLunar: TextView
     private lateinit var tvPct: TextView
-    private lateinit var tvWifi: TextView
-    private lateinit var tvBt: TextView
     private lateinit var battery: BatteryView
     private lateinit var remote: RemoteController
     private var connWake: PowerManager.WakeLock? = null
@@ -238,15 +231,11 @@ class MainActivity : Activity(), FullscreenHost {
         bar.addView(btnBack, LinearLayout.LayoutParams(0, -1, 1f))
         bar.addView(gap(10))
 
-        // Góc phải: pin, wifi, bluetooth, giờ, ngày, âm lịch
+        // Góc phải: pin, giờ, ngày, âm lịch
         battery = BatteryView(this)
         bar.addView(battery, LinearLayout.LayoutParams(dp(24), dp(18)))
         tvPct = small("--%").apply { setPadding(dp(3), 0, dp(8), 0) }
         bar.addView(tvPct, LinearLayout.LayoutParams(-2, -1))
-        tvWifi = small("WiFi", 12f, true).apply { setPadding(dp(8), 0, dp(8), 0) }
-        bar.addView(tvWifi, LinearLayout.LayoutParams(-2, -1))
-        tvBt = small("BT", 12f, true).apply { setPadding(dp(8), 0, dp(10), 0) }
-        bar.addView(tvBt, LinearLayout.LayoutParams(-2, -1))
         tvTime = small("--:--", 18f, true).apply { setPadding(0, 0, dp(8), 0) }
         bar.addView(tvTime, LinearLayout.LayoutParams(-2, -1))
         val dates = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
@@ -277,11 +266,8 @@ class MainActivity : Activity(), FullscreenHost {
             setOnClickListener { goBack() }
         }
         root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
-        panels = QuickPanels(this, root, barH)
         remote = RemoteController(this, root, { if (mode == 1) tv?.activeWeb else if (mode == 2) yt?.web else null }, { remoteVoice(it) })
         remote.onFullscreen = { if (fullView != null) hideFull() else remote.fullscreenVideo() }
-        tvWifi.setOnClickListener { panels.toggle(1) }
-        tvBt.setOnClickListener { panels.toggle(2) }
         hidden = FrameLayout(this)
         root.addView(hidden, FrameLayout.LayoutParams(1, 1))
         setContentView(root)
@@ -346,12 +332,12 @@ class MainActivity : Activity(), FullscreenHost {
         updateButtons()
     }
 
+    // Thoát: luôn về thẳng trang ngoài cùng (menu chọn đài của TV / trang chủ YouTube), kể cả khi đang toàn màn hình.
     private fun goBack() {
-        if (panels.isOpen()) { panels.hide(); return }
-        if (fullView != null) { hideFull(); return }
+        if (fullView != null) hideFull()
         when (mode) {
-            1 -> tv?.back()
-            2 -> yt?.back()
+            1 -> tv?.home()
+            2 -> yt?.home()
         }
     }
 
@@ -480,7 +466,6 @@ class MainActivity : Activity(), FullscreenHost {
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == 3010) panels.refresh(true)
         if (requestCode == REQ_VOICE_PERM && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) launchVoice()
     }
 
@@ -494,20 +479,6 @@ class MainActivity : Activity(), FullscreenHost {
         tvDate.text = "$dow $d/$m/$y"
         val l = LunarCalendar.solarToLunar(d, m, y)
         tvLunar.text = "ÂL " + l[0] + "/" + l[1] + (if (l[3] == 1) " nhuận" else "")
-
-        // WiFi: trắng = đã kết nối, vàng = bật nhưng chưa kết nối, xám = tắt
-        try {
-            val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-            val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            val caps = cm.getNetworkCapabilities(cm.activeNetwork)
-            val onWifi = caps?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
-            tvWifi.setTextColor(if (onWifi) Color.WHITE else if (wm.isWifiEnabled) 0xFFFFC857.toInt() else 0xFF777788.toInt())
-        } catch (e: Exception) { tvWifi.setTextColor(0xFF777788.toInt()) }
-        // Bluetooth: xanh = bật, xám = tắt
-        try {
-            val on = BluetoothAdapter.getDefaultAdapter()?.isEnabled == true
-            tvBt.setTextColor(if (on) 0xFF5AA9FF.toInt() else 0xFF777788.toInt())
-        } catch (e: Exception) { tvBt.setTextColor(0xFF777788.toInt()) }
     }
 
     override fun onResume() { super.onResume(); hideSystemBars(); refreshStatus(); if (mode == 1) tv?.onResume() else if (mode == 2) yt?.onResume() }
@@ -516,7 +487,6 @@ class MainActivity : Activity(), FullscreenHost {
     override fun onDestroy() {
         ui.removeCallbacksAndMessages(null)
         try { unregisterReceiver(batteryRx) } catch (e: Exception) { }
-        panels.hide()
         transfer?.destroy()
         try { connWake?.let { if (it.isHeld) it.release() } } catch (e: Exception) { }
         tv?.destroy(); yt?.destroy()
