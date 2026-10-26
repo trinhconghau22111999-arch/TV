@@ -107,7 +107,7 @@ class RemoteController(
             "click" -> { showCursor(); tap() }
             "scroll" -> {
                 val dy = o.optInt("dy")
-                activeWeb()?.evaluateJavascript("window.scrollBy(0," + (-dy * 2) + ");", null)
+                scrollAtCursor(-dy * 2)
             }
             "key" -> key(o.optString("key"))
             "screen" -> if (o.optBoolean("on", true)) wake() else lock()
@@ -145,6 +145,27 @@ class RemoteController(
                     "if(!document.fullscreenElement&&p&&p.requestFullscreen)p.requestFullscreen();}catch(e){}})()", null)
             }, 250)
         }
+    }
+
+    /**
+     * Cuon dung vung dang tro chuot: tim phan tu duoi con tro, di len cha cho toi khi gap khung cuon duoc
+     * (vd. danh sach goi y ben phai) va cuon khung do; khong co thi cuon ca trang (video chinh).
+     */
+    private fun scrollAtCursor(dy: Int) {
+        val wv = activeWeb() ?: return
+        val a = IntArray(2); val b = IntArray(2)
+        wv.getLocationInWindow(a); root.getLocationInWindow(b)
+        val fx = ((cx - (a[0] - b[0])) / wv.width.coerceAtLeast(1)).coerceIn(0f, 1f)
+        val fy = ((cy - (a[1] - b[1])) / wv.height.coerceAtLeast(1)).coerceIn(0f, 1f)
+        val js = "(function(){try{var x=Math.min(window.innerWidth-1,$fx*window.innerWidth),y=Math.min(window.innerHeight-1,$fy*window.innerHeight),d=$dy;" +
+            "var e=document.elementFromPoint(x,y);" +
+            "while(e&&e!==document.body&&e!==document.documentElement){" +
+            "var o=getComputedStyle(e).overflowY;" +
+            "if((o==='auto'||o==='scroll'||o==='overlay')&&e.scrollHeight>e.clientHeight+1){" +
+            "var t=e.scrollTop;e.scrollTop=t+d;if(e.scrollTop!==t)return;}" +
+            "e=e.parentElement;}" +
+            "var s=document.scrollingElement||document.documentElement;s.scrollTop+=d;}catch(err){window.scrollBy(0,$dy);}})()"
+        wv.evaluateJavascript(js, null)
     }
 
     /** Am luong TV (luong media) theo muc 0..100. */
