@@ -315,6 +315,8 @@ class MainActivity : Activity(), FullscreenHost {
         }
         hideFull()
         setMode(m)
+        // Chuyen qua lai TV <-> YouTube: khong giu dai/video cu, luon ve menu chon dai (TV) hoac trang chu (YouTube)
+        if (m == 1) tv?.home() else yt?.home()
     }
 
     override fun setBarVisible(v: Boolean) {
