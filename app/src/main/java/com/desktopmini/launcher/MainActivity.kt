@@ -269,6 +269,7 @@ class MainActivity : Activity(), FullscreenHost {
         root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
         remote = RemoteController(this, root, { if (mode == 1) tv?.activeWeb else if (mode == 2) yt?.web else null }, { remoteVoice(it) })
         remote.onNext = { mode == 1 && (tv?.nextChannel() == true) }
+        remote.onBack = { goBack() }
         remote.onFullscreen = { if (fullView != null) hideFull() else remote.fullscreenVideo() }
         hidden = FrameLayout(this)
         root.addView(hidden, FrameLayout.LayoutParams(1, 1))

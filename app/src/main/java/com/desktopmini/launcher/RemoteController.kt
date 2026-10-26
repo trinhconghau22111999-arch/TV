@@ -41,6 +41,7 @@ class RemoteController(
 
     /** Dat boi MainActivity: bam nut phong to tren remote (dang toan man hinh thi thu nho lai). */
     var onFullscreen: (() -> Unit)? = null
+    var onBack: (() -> Unit)? = null
 
     /** Dat boi MainActivity: "tiep theo" - TV: kenh ke tiep trong dai; tra false thi dung lenh cua trang (YouTube). */
     var onNext: (() -> Boolean)? = null
@@ -116,6 +117,7 @@ class RemoteController(
             "quality" -> setQuality(o.optInt("q"))
             "touchlock" -> touchLocked = o.optBoolean("on", false)
             "fullscreen" -> onFullscreen?.invoke()
+            "back" -> onBack?.invoke()
             "media" -> media(o.optString("cmd"))
         }
     }
