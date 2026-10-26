@@ -8,6 +8,7 @@ import android.content.Intent
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.media.AudioManager
 import android.os.Handler
 import android.os.Looper
 import android.os.PowerManager
@@ -19,10 +20,12 @@ import android.webkit.WebView
 import android.widget.FrameLayout
 import android.widget.Toast
 import org.json.JSONObject
+import kotlin.math.roundToInt
 
 /**
  * Nhan lenh tu app DK_TV (dien thoai) qua kenh truyen tep: {"type":"remote","action":...}
- *   key (up/down/left/right/ok), move (dx,dy), click, scroll (dy), screen (on), voice (q).
+ *   key (up/down/left/right/ok), move (dx,dy), click, scroll (dy), screen (on), voice (q),
+ *   volume / brightness (level 0..100), quality (q = 360 | 720).
  * Con tro chuot la 1 cham tron ve de len tren cung [root]; nhap = tiep xuc gia lap gui vao [root].
  */
 class RemoteController(
@@ -83,7 +86,36 @@ class RemoteController(
             "key" -> key(o.optString("key"))
             "screen" -> if (o.optBoolean("on", true)) wake() else lock()
             "voice" -> { val q = o.optString("q"); if (q.isNotBlank()) onVoice(q) }
+            "volume" -> setVolume(o.optInt("level", -1))
+            "brightness" -> setBrightness(o.optInt("level", -1))
+            "quality" -> setQuality(o.optInt("q"))
         }
+    }
+
+    /** Am luong TV (luong media) theo muc 0..100. */
+    private fun setVolume(level: Int) {
+        if (level !in 0..100) return
+        val am = act.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        val max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        try { am.setStreamVolume(AudioManager.STREAM_MUSIC, (level * max / 100f).roundToInt(), 0) } catch (e: Exception) { }
+    }
+
+    /** Do sang man hinh app theo muc 0..100 (khong can cap quyen he thong). */
+    private fun setBrightness(level: Int) {
+        if (level !in 0..100) return
+        ui.post {
+            val lp = act.window.attributes
+            lp.screenBrightness = (level / 100f).coerceIn(0.02f, 1f)
+            act.window.attributes = lp
+        }
+    }
+
+    /** Chat luong video YouTube 360p / 720p: luu vao localStorage cua YouTube + ep player dang phat, thu lai vai lan vi player doi chat luong khi nap video. */
+    private fun setQuality(q: Int) {
+        val name = when (q) { 360 -> "medium"; 720 -> "hd720"; else -> return }
+        val js = "(function(){var q=$q,n='$name';try{var t=Date.now();localStorage.setItem('yt-player-quality',JSON.stringify({data:JSON.stringify({quality:q,previousQuality:q}),expiration:t+2592000000,creation:t}));}catch(e){}" +
+            "try{var p=document.getElementById('movie_player')||document.querySelector('.html5-video-player');if(p){if(p.setPlaybackQualityRange)p.setPlaybackQualityRange(n,n);if(p.setPlaybackQuality)p.setPlaybackQuality(n);}}catch(e){}})()"
+        for (d in longArrayOf(0, 1500, 4000)) ui.postDelayed({ activeWeb()?.evaluateJavascript(js, null) }, d)
     }
 
     private fun tap() {
