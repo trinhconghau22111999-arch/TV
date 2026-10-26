@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
 /**
  * Nhan lenh tu app DK_TV (dien thoai) qua kenh truyen tep: {"type":"remote","action":...}
  *   key (up/down/left/right/ok), move (dx,dy), click, scroll (dy), screen (on), voice (q),
- *   volume / brightness (level 0..100), quality (q = 360 | 720), touchlock (on).
+ *   volume / brightness (level 0..100), quality (q = 360 | 720), touchlock (on), fullscreen.
  * Con tro chuot la 1 cham tron ve de len tren cung [root]; nhap = tiep xuc gia lap gui vao [root].
  */
 class RemoteController(
@@ -38,6 +38,9 @@ class RemoteController(
 
     /** true = TV khong nhan cam ung truc tiep nua (chi dieu khien bang remote tren dien thoai). Khong luu: mo lai app la tu bat lai. */
     @Volatile var touchLocked = false
+
+    /** Dat boi MainActivity: bam nut phong to tren remote (dang toan man hinh thi thu nho lai). */
+    var onFullscreen: (() -> Unit)? = null
     private var cx = 0f
     private var cy = 0f
     private var placed = false
@@ -93,6 +96,32 @@ class RemoteController(
             "brightness" -> setBrightness(o.optInt("level", -1))
             "quality" -> setQuality(o.optInt("q"))
             "touchlock" -> touchLocked = o.optBoolean("on", false)
+            "fullscreen" -> onFullscreen?.invoke()
+        }
+    }
+
+    /**
+     * Phong to video dang phat: chuyen sang toan man hinh. Fullscreen API cua WebView doi 1 cu cham that tren trang,
+     * nen cham gia lap vao giua video (kich hoat tuong tac) roi moi yeu cau fullscreen tren khung player.
+     */
+    fun fullscreenVideo() {
+        val wv = activeWeb() ?: return
+        val js = "(function(){var v=document.querySelector('video');if(!v)return '';var r=v.getBoundingClientRect();" +
+            "if(r.width<=0||r.height<=0)return '';return JSON.stringify({x:r.left+r.width/2,y:r.top+r.height/2,d:window.devicePixelRatio||1});})()"
+        wv.evaluateJavascript(js) { raw ->
+            val s = try { org.json.JSONArray("[" + raw + "]").optString(0) } catch (e: Exception) { "" }
+            if (s.isBlank()) { Toast.makeText(act, "Chưa có video để phóng to", Toast.LENGTH_SHORT).show(); return@evaluateJavascript }
+            try {
+                val o = JSONObject(s)
+                val a = IntArray(2); val b = IntArray(2)
+                wv.getLocationInWindow(a); root.getLocationInWindow(b)
+                val d = o.optDouble("d", 1.0).toFloat()
+                tap(a[0] - b[0] + o.optDouble("x").toFloat() * d, a[1] - b[1] + o.optDouble("y").toFloat() * d)
+            } catch (e: Exception) { }
+            ui.postDelayed({
+                wv.evaluateJavascript("(function(){try{var v=document.querySelector('video');var p=document.getElementById('movie_player')||v;" +
+                    "if(!document.fullscreenElement&&p&&p.requestFullscreen)p.requestFullscreen();}catch(e){}})()", null)
+            }, 250)
         }
     }
 
@@ -122,10 +151,10 @@ class RemoteController(
         for (d in longArrayOf(0, 1500, 4000)) ui.postDelayed({ activeWeb()?.evaluateJavascript(js, null) }, d)
     }
 
-    private fun tap() {
+    private fun tap(x: Float = cx, y: Float = cy) {
         val t = SystemClock.uptimeMillis()
-        val down = MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, cx, cy, 0)
-        val up = MotionEvent.obtain(t, t + 60, MotionEvent.ACTION_UP, cx, cy, 0)
+        val down = MotionEvent.obtain(t, t, MotionEvent.ACTION_DOWN, x, y, 0)
+        val up = MotionEvent.obtain(t, t + 60, MotionEvent.ACTION_UP, x, y, 0)
         down.source = android.view.InputDevice.SOURCE_TOUCHSCREEN
         up.source = android.view.InputDevice.SOURCE_TOUCHSCREEN
         root.dispatchTouchEvent(down)

@@ -279,6 +279,7 @@ class MainActivity : Activity(), FullscreenHost {
         root.addView(floatBack, FrameLayout.LayoutParams(-2, -2).also { it.leftMargin = dp(8); it.topMargin = dp(8) })
         panels = QuickPanels(this, root, barH)
         remote = RemoteController(this, root, { if (mode == 1) tv?.activeWeb else if (mode == 2) yt?.web else null }, { remoteVoice(it) })
+        remote.onFullscreen = { if (fullView != null) hideFull() else remote.fullscreenVideo() }
         tvWifi.setOnClickListener { panels.toggle(1) }
         tvBt.setOnClickListener { panels.toggle(2) }
         hidden = FrameLayout(this)
