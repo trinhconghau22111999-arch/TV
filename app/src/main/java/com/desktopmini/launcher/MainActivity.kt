@@ -401,7 +401,30 @@ class MainActivity : Activity(), FullscreenHost {
     // Remote giong noi, tuy che do dang chon san tren TV:
     //  - dang o TV (mode 1): noi ten kenh/dai -> mo kenh do
     //  - con lai (YouTube hoac trang trong): noi ten video -> tim tren YouTube va tu mo video dau tien
+    // Chuẩn hoá câu nói: bỏ dấu, chữ thường, bỏ dấu câu (để so khớp lệnh "mở TV" / "mở YouTube").
+    private fun normVoice(q: String): String =
+        java.text.Normalizer.normalize(q.lowercase(), java.text.Normalizer.Form.NFD)
+            .replace(Regex("\\p{Mn}+"), "").replace('đ', 'd')
+            .replace(Regex("[^a-z0-9 ]"), " ").replace(Regex("\\s+"), " ").trim()
+
+    private val VOICE_OPEN = "(?:mo|bat|vao|open|chuyen sang|chuyen qua|di toi|quay ve)"
+    private val VOICE_TV = Regex("^$VOICE_OPEN (?:ra |lai )?(?:trang chon kenh |trang chu |man hinh )?(?:tv|ti vi|tivi|truyen hinh|kenh tv)(?: len| di| giup| cho toi)?$")
+    private val VOICE_YT = Regex("^$VOICE_OPEN (?:ra |lai )?(?:trang chu )?(?:youtube|you tube|du tup|diu tup|yu tup|iu tup)(?: len| di| giup| cho toi)?$")
+
+    // "mở TV" -> sang TV và hiện trang chọn kênh (đang ở YouTube cũng được); "mở YouTube" -> sang YouTube, vào trang chủ.
+    // Trả về true nếu câu nói là lệnh mở và đã xử lý xong.
+    private fun voiceOpenCommand(q: String): Boolean {
+        val n = normVoice(q)
+        when {
+            VOICE_TV.matches(n) -> { if (mode != 1) { hideFull(); setMode(1) }; tv?.home() }
+            VOICE_YT.matches(n) -> { if (mode != 2) { hideFull(); setMode(2) }; yt?.home() }
+            else -> return false
+        }
+        return true
+    }
+
     private fun remoteVoice(q: String) {
+        if (voiceOpenCommand(q)) return
         if (mode == 1) {
             val ok = tv?.playByName(q) ?: false
             if (!ok) Toast.makeText(this, "Không tìm thấy kênh: $q", Toast.LENGTH_LONG).show()
