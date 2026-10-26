@@ -234,15 +234,16 @@ class MainActivity : Activity(), FullscreenHost {
         // Góc phải: pin, giờ, ngày, âm lịch
         battery = BatteryView(this)
         bar.addView(battery, LinearLayout.LayoutParams(dp(24), dp(18)))
-        tvPct = small("--%").apply { setPadding(dp(3), 0, dp(8), 0) }
+        // Pin %, giờ, ngày, âm lịch: cùng 1 hàng ngang, cùng cỡ chữ (13sp, đậm), cách đều nhau
+        val cluster = 13f
+        tvPct = small("--%", cluster, true).apply { setPadding(dp(3), 0, dp(12), 0) }
         bar.addView(tvPct, LinearLayout.LayoutParams(-2, -1))
-        tvTime = small("--:--", 18f, true).apply { setPadding(0, 0, dp(8), 0) }
+        tvTime = small("--:--", cluster, true).apply { setPadding(0, 0, dp(12), 0) }
         bar.addView(tvTime, LinearLayout.LayoutParams(-2, -1))
-        val dates = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
-        tvDate = small("", 10f)
-        tvLunar = small("", 10f).apply { setTextColor(0xFFFFD27A.toInt()) }
-        dates.addView(tvDate); dates.addView(tvLunar)
-        bar.addView(dates, LinearLayout.LayoutParams(-2, -1))
+        tvDate = small("", cluster, true).apply { setPadding(0, 0, dp(12), 0) }
+        bar.addView(tvDate, LinearLayout.LayoutParams(-2, -1))
+        tvLunar = small("", cluster, true).apply { setTextColor(0xFFFFD27A.toInt()) }
+        bar.addView(tvLunar, LinearLayout.LayoutParams(-2, -1))
 
         barView = bar
         col.addView(bar, LinearLayout.LayoutParams(-1, barH))
