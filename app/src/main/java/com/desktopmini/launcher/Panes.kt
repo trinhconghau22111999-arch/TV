@@ -152,6 +152,17 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
                 return null
             }
 
+            // Ghi lai tung trang da xem (ke ca chuyen trang kieu SPA cua YouTube) de nut lui quay lai dung tung buoc
+            override fun doUpdateVisitedHistory(view: WebView?, url: String?, isReload: Boolean) {
+                if (url == null || isReload) return
+                val u = try { Uri.parse(url) } catch (e: Exception) { return }
+                if (u.scheme != "https" && u.scheme != "http") return
+                val k = pageKey(u)
+                if (trail.isNotEmpty() && trailKeys.last() == k) { trail[trail.size - 1] = url; return }
+                trail.add(url); trailKeys.add(k)
+                if (trail.size > 40) { trail.removeAt(0); trailKeys.removeAt(0) }
+            }
+
             override fun onPageFinished(view: WebView?, url: String?) {
                 val h = try { Uri.parse(url ?: "").host } catch (e: Exception) { null } ?: return
                 if (clearHistoryOnFinish && hostIs(h, "youtube.com")) { clearHistoryOnFinish = false; view?.clearHistory() }
@@ -166,17 +177,32 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
         web.loadUrl(YT_HOME)
     }
 
+    // Lich su duoi dang danh sach URL tu theo doi (khong phu thuoc lich su WebView vi YouTube hay thay the muc lich su)
+    private val trail = ArrayList<String>()
+    private val trailKeys = ArrayList<String>()
+    /** Cac URL cung 1 video (them t=, list=...) coi la 1 trang de lui khong bi ket o 1 video. */
+    private fun pageKey(u: Uri): String {
+        val path = u.path ?: ""
+        return if (path == "/watch") "watch:" + (u.getQueryParameter("v") ?: "") else u.buildUpon().fragment(null).build().toString()
+    }
+
     fun search(q: String) { web.loadUrl("https://www.youtube.com/results?search_query=" + Uri.encode(q)) }
     // Ve trang chu va xoa lich su duyet cu (nut ← khong quay lai video truoc do nua)
     private var clearHistoryOnFinish = false
     fun home() {
         clearHistoryOnFinish = true
+        trail.clear(); trailKeys.clear()
         web.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(v){try{v.pause()}catch(e){}})", null)
         web.loadUrl(YT_HOME)
     }
     // Lùi từng bước theo lịch sử; hết lịch sử mà chưa ở trang chủ thì về trang chủ YouTube. false = đã ở trang chủ.
     fun back(): Boolean {
-        if (web.canGoBack()) { web.goBack(); return true }
+        if (trail.size > 1) {
+            trail.removeAt(trail.size - 1); trailKeys.removeAt(trailKeys.size - 1)
+            web.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(v){try{v.pause()}catch(e){}})", null)
+            web.loadUrl(trail.last())
+            return true
+        }
         val path = try { Uri.parse(web.url ?: "").path ?: "" } catch (e: Exception) { "" }
         if (path.isEmpty() || path == "/") return false
         home(); return true
