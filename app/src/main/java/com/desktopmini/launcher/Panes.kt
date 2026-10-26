@@ -174,7 +174,13 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
         web.evaluateJavascript("document.querySelectorAll('video,audio').forEach(function(v){try{v.pause()}catch(e){}})", null)
         web.loadUrl(YT_HOME)
     }
-    fun back(): Boolean { return if (web.canGoBack()) { web.goBack(); true } else false }
+    // Lùi từng bước theo lịch sử; hết lịch sử mà chưa ở trang chủ thì về trang chủ YouTube. false = đã ở trang chủ.
+    fun back(): Boolean {
+        if (web.canGoBack()) { web.goBack(); return true }
+        val path = try { Uri.parse(web.url ?: "").path ?: "" } catch (e: Exception) { "" }
+        if (path.isEmpty() || path == "/") return false
+        home(); return true
+    }
     fun onPause() { CookieManager.getInstance().flush(); web.onPause() }
     fun onResume() { web.onResume() }
     fun destroy() { try { (web.parent as? ViewGroup)?.removeView(web); web.destroy() } catch (e: Exception) { } }

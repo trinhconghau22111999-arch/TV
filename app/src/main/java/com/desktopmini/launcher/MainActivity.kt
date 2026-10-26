@@ -333,12 +333,11 @@ class MainActivity : Activity(), FullscreenHost {
         updateButtons()
     }
 
-    // Thoát: luôn về thẳng trang ngoài cùng (menu chọn đài của TV / trang chủ YouTube), kể cả khi đang toàn màn hình.
+    // Thoát: TV -> về thẳng menu chọn đài. YouTube -> lùi từng bước (thoát toàn màn hình trước), cuối cùng về trang chủ YouTube.
     private fun goBack() {
-        if (fullView != null) hideFull()
         when (mode) {
-            1 -> tv?.home()
-            2 -> yt?.home()
+            1 -> { if (fullView != null) hideFull(); tv?.home() }
+            2 -> { if (fullView != null) { hideFull(); return }; yt?.back() }
         }
     }
 
