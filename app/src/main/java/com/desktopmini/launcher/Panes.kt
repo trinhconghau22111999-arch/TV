@@ -154,6 +154,7 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
 
             override fun onPageFinished(view: WebView?, url: String?) {
                 val h = try { Uri.parse(url ?: "").host } catch (e: Exception) { null } ?: return
+                if (clearHistoryOnFinish && hostIs(h, "youtube.com")) { clearHistoryOnFinish = false; view?.clearHistory() }
                 if (hostIs(h, "youtube.com")) {
                     view?.evaluateJavascript("window.__wbAdSkip=true;" + YT_ONLY_AD_JS, null)
                     view?.evaluateJavascript(VOICE_HOOK_JS, null)
@@ -166,7 +167,9 @@ class YouTubePane(private val act: Activity, private val full: FullscreenHost) {
     }
 
     fun search(q: String) { web.loadUrl("https://www.youtube.com/results?search_query=" + Uri.encode(q)) }
-    fun home() { web.loadUrl(YT_HOME) }
+    // Ve trang chu va xoa lich su duyet cu (nut ← khong quay lai video truoc do nua)
+    private var clearHistoryOnFinish = false
+    fun home() { clearHistoryOnFinish = true; web.loadUrl(YT_HOME) }
     fun back(): Boolean { return if (web.canGoBack()) { web.goBack(); true } else false }
     fun onPause() { CookieManager.getInstance().flush(); web.onPause() }
     fun onResume() { web.onResume() }
